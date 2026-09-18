@@ -400,12 +400,12 @@ object WifiMonitorManager {
                 } catch (_: Throwable) {}
             }
 
-            if (systemStatsBytes > localAccumulated) {
+            if (systemStatsBytes > 0L) {
                 WifiMonitorPreferences.setAccumulatedTodayBytes(context, systemStatsBytes)
             }
         } catch (_: Throwable) {}
 
-        return maxOf(systemStatsBytes, localAccumulated)
+        return if (systemStatsBytes > 0L) systemStatsBytes else localAccumulated
     }
 
     private fun measurePing(): Int {

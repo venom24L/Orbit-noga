@@ -199,7 +199,7 @@ fun WifiMonitorSettingsDialog(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(stringResource(id = R.string.limit_custom), color = inkDim, fontSize = 11.sp) },
-                    placeholder = { Text("e.g. 1500 MB", color = inkDim.copy(alpha = 0.5f), fontSize = 11.sp) },
+                    placeholder = { Text(stringResource(id = R.string.wifi_limit_placeholder), color = inkDim.copy(alpha = 0.5f), fontSize = 11.sp) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -489,7 +489,7 @@ fun WifiMonitorSettingsDialog(
                             shape = RoundedCornerShape(8.dp),
                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                         ) {
-                            Text(text = "GRANT", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text(text = stringResource(id = R.string.wifi_grant_permission), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

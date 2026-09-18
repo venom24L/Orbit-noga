@@ -56,10 +56,10 @@ object ShortcutNotificationManager {
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "App Shortcut Notifications",
+                context.getString(R.string.shortcut_notif_channel_name),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Ongoing notifications to directly launch your configured favorite applications."
+                description = context.getString(R.string.shortcut_notif_channel_desc)
                 setShowBadge(false)
                 enableVibration(false)
                 enableLights(false)
@@ -175,8 +175,8 @@ object ShortcutNotificationManager {
         createNotificationChannel(context)
 
         val targetPackage = item.packageName
-        val title = item.displayTitle()
-        val body = item.displayBody()
+        val title = item.displayTitle(context)
+        val body = item.displayBody(context)
         val iconType = item.iconType
         val isOngoing = item.isOngoing
 
@@ -243,10 +243,10 @@ object ShortcutNotificationManager {
         }
 
         // Action 1: Open app
-        builder.addAction(0, "Open", pendingIntent)
+        builder.addAction(0, context.getString(R.string.shortcut_action_open), pendingIntent)
 
         // Action 2: Remove shortcut
-        builder.addAction(0, "Remove", removePendingIntent)
+        builder.addAction(0, context.getString(R.string.shortcut_action_remove), removePendingIntent)
 
         val notification = builder.build()
         if (isOngoing) {
@@ -284,8 +284,8 @@ object ShortcutNotificationManager {
 
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_orbit_small_monochrome)
-            .setContentTitle("Orbit Shortcuts")
-            .setContentText("$activeCount active app shortcuts")
+            .setContentTitle(context.getString(R.string.shortcut_notif_title_screen))
+            .setContentText(context.getString(R.string.shortcut_summary_active_count, activeCount))
             .setContentIntent(pendingIntent)
             .setGroup(GROUP_KEY_SHORTCUTS)
             .setGroupSummary(true)

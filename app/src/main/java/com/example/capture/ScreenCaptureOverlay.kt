@@ -43,6 +43,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.IntOffset
@@ -200,12 +202,12 @@ fun ScreenCaptureOverlay(
                     onClick = onCancel,
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xAAFF4D4D))
                 ) {
-                    Icon(Icons.Default.Close, contentDescription = "Cancel")
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.capture_overlay_cancel))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Cancel")
+                    Text(stringResource(R.string.capture_overlay_cancel))
                 }
                 Text(
-                    text = "Drag corners to resize. Drag inside to move.",
+                    text = stringResource(R.string.capture_overlay_instruction),
                     color = Color.White,
                     fontSize = 13.sp
                 )
@@ -235,11 +237,11 @@ fun ScreenCaptureOverlay(
                 ) {
                     Icon(
                         Icons.Default.CameraAlt,
-                        contentDescription = "Capture",
+                        contentDescription = stringResource(R.string.capture_overlay_capture),
                         tint = Color.Black
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Capture & OCR", color = Color.Black, fontSize = 16.sp)
+                    Text(stringResource(R.string.capture_ocr_btn), color = Color.Black, fontSize = 16.sp)
                 }
             }
         }

@@ -1111,12 +1111,12 @@ fun FloatingWebViewContent(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Refresh,
-                                    contentDescription = "Retry",
+                                    contentDescription = stringResource(id = R.string.retry_label),
                                     tint = Color.Black,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text(text = "Retry", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text(text = stringResource(id = R.string.retry_label), color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             }
 
                             Button(
@@ -1451,7 +1451,7 @@ fun DownloadConfirmationDialog(
                     tint = Color.White
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Download", color = Color.White, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.download_label), color = Color.White, fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
@@ -1460,7 +1460,7 @@ fun DownloadConfirmationDialog(
                 shape = RoundedCornerShape(12.dp),
                 border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
             ) {
-                Text("Cancel", color = Color.White.copy(alpha = 0.8f))
+                Text(stringResource(R.string.cancel), color = Color.White.copy(alpha = 0.8f))
             }
         },
         icon = {
@@ -1482,7 +1482,7 @@ fun DownloadConfirmationDialog(
         },
         title = {
             Text(
-                text = "Download file?",
+                text = stringResource(R.string.download_file_confirm),
                 color = Color.White,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
@@ -1527,18 +1527,21 @@ fun DownloadConfirmationDialog(
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                val domain = try {
-                    if (prompt.originUrl.startsWith("http")) {
-                        Uri.parse(prompt.originUrl).host ?: "Web Download"
-                    } else if (prompt.originUrl.startsWith("blob:")) {
-                        "Generated AI Blob"
-                    } else if (prompt.originUrl.startsWith("data:")) {
-                        "Generated AI Canvas / Image"
-                    } else {
-                        "Web Download"
-                    }
-                } catch (e: Exception) {
-                    "Web Download"
+                val fallbackWeb = stringResource(R.string.download_domain_web)
+                val blobText = stringResource(R.string.download_domain_blob)
+                val canvasText = stringResource(R.string.download_domain_canvas)
+                val parsedHost = remember(prompt.originUrl) {
+                    try {
+                        if (prompt.originUrl.startsWith("http")) {
+                            Uri.parse(prompt.originUrl).host
+                        } else null
+                    } catch (_: Exception) { null }
+                }
+                val domain = when {
+                    parsedHost != null -> parsedHost
+                    prompt.originUrl.startsWith("blob:") -> blobText
+                    prompt.originUrl.startsWith("data:") -> canvasText
+                    else -> fallbackWeb
                 }
                 val ext = prompt.filename.substringAfterLast('.', "").uppercase()
                 Row(
@@ -1607,13 +1610,13 @@ fun PageMediaPickerSheet(
             ) {
                 Column {
                     Text(
-                        text = "Page Media & AI Pictures",
+                        text = stringResource(R.string.page_media_title),
                         color = Color.White,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "${mediaList.size} items detected on this page",
+                        text = stringResource(R.string.page_media_detected_count, mediaList.size),
                         color = Color.White.copy(alpha = 0.6f),
                         fontSize = 12.sp
                     )
@@ -1629,7 +1632,7 @@ fun PageMediaPickerSheet(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Downloads", color = accentColor, fontSize = 12.sp)
+                    Text(stringResource(R.string.downloads_title), color = accentColor, fontSize = 12.sp)
                 }
             }
 
@@ -1712,7 +1715,7 @@ fun PageMediaPickerSheet(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Download,
-                                        contentDescription = "Download",
+                                        contentDescription = stringResource(R.string.download_label),
                                         tint = accentColor,
                                         modifier = Modifier.size(13.dp)
                                     )

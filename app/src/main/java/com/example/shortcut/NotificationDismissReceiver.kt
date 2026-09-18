@@ -1,5 +1,6 @@
 package com.example.shortcut
 
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -96,6 +97,11 @@ class NotificationDismissReceiver : BroadcastReceiver() {
                 val shortcutId = intent.getStringExtra(EXTRA_SHORTCUT_ID) ?: return
                 Log.d(TAG, "User requested removal of shortcut $shortcutId via notification action")
                 try {
+                    val shortcut = ShortcutNotificationPreferences.getShortcutById(context, shortcutId)
+                    if (shortcut != null) {
+                        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                        nm?.cancel(shortcut.notificationId)
+                    }
                     ShortcutNotificationPreferences.setShortcutEnabled(context, shortcutId, false)
                     ShortcutNotificationManager.syncServiceState(context)
                 } catch (e: Exception) {

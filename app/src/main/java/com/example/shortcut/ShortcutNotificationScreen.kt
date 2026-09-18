@@ -93,6 +93,12 @@ fun ShortcutNotificationScreen(
         allShortcuts = ShortcutNotificationPreferences.getAllShortcuts(context)
     }
 
+    LaunchedEffect(Unit) {
+        ShortcutNotificationPreferences.shortcutsUpdateEvent.collect {
+            refreshShortcuts()
+        }
+    }
+
     Box(
         modifier = if (isEmbedded) {
             Modifier.fillMaxWidth()
@@ -120,8 +126,16 @@ fun ShortcutNotificationScreen(
                     editingShortcut = shortcut
                 },
                 onToggleShortcut = { shortcut, enabled ->
-                    if (enabled && !isNotificationPermissionGranted) {
-                        onRequestNotificationPermission()
+                    if (enabled) {
+                        if (!isNotificationPermissionGranted) {
+                            onRequestNotificationPermission()
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.permission_notification_required),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@ShortcutsListContent
+                        }
                     }
                     ShortcutNotificationPreferences.setShortcutEnabled(context, shortcut.id, enabled)
                     ShortcutNotificationManager.syncServiceState(context)
@@ -131,7 +145,7 @@ fun ShortcutNotificationScreen(
                     } else {
                         context.getString(R.string.shortcut_notif_muted_status)
                     }
-                    Toast.makeText(context, "${shortcut.displayTitle()}: $message", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "${shortcut.displayTitle(context)}: $message", Toast.LENGTH_SHORT).show()
                 },
                 onDeleteShortcut = { shortcut ->
                     shortcutToDelete = shortcut
@@ -183,7 +197,7 @@ fun ShortcutNotificationScreen(
                 },
                 text = {
                     Text(
-                        text = "Are you sure you want to remove the shortcut for \"${item.displayTitle()}\"?",
+                        text = stringResource(R.string.shortcut_notif_delete_confirm_desc),
                         color = Color(0xFFEEF0F6)
                     )
                 },
@@ -326,14 +340,14 @@ private fun ShortcutsListContent(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Notification Permission Required",
+                            text = stringResource(R.string.shortcut_notif_permission_required_title),
                             color = Color.White,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Tap here to allow Orbit to post shortcuts into the notification shade.",
+                            text = stringResource(R.string.shortcut_notif_permission_required_desc),
                             color = Color(0xFFD4BBA5),
                             fontSize = 12.sp,
                             lineHeight = 16.sp
@@ -359,7 +373,7 @@ private fun ShortcutsListContent(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "SHORTCUTS",
+                    text = stringResource(R.string.shortcut_notif_section_header),
                     color = inkDim,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
@@ -373,7 +387,7 @@ private fun ShortcutsListContent(
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        text = "$activeCount active • ${validShortcuts.size} total",
+                        text = stringResource(R.string.shortcut_notif_count_summary, activeCount, validShortcuts.size),
                         color = if (activeCount > 0) signalOrange else inkDim,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
@@ -446,7 +460,7 @@ private fun ShortcutsListContent(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Pin any application to your Android notification shade with dynamic palette accent colors and quick action buttons.",
+                        text = stringResource(R.string.shortcut_notif_empty_desc),
                         color = inkDim,
                         fontSize = 13.sp,
                         lineHeight = 18.sp,
@@ -486,6 +500,8 @@ private fun ShortcutsListContent(
                         shortcut = shortcut,
                         appInfo = appInfo,
                         accentColor = signalOrange,
+                        isNotificationPermissionGranted = isNotificationPermissionGranted,
+                        onRequestNotificationPermission = onRequestNotificationPermission,
                         onToggle = { enabled -> onToggleShortcut(shortcut, enabled) },
                         onEdit = { onEditShortcut(shortcut) },
                         onDelete = { onDeleteShortcut(shortcut) }
@@ -506,12 +522,15 @@ private fun ShortcutItemCard(
     shortcut: ShortcutItem,
     appInfo: AppInfo?,
     accentColor: Color,
+    isNotificationPermissionGranted: Boolean,
+    onRequestNotificationPermission: () -> Unit,
     onToggle: (Boolean) -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     val inkDim = Color(0xFF5A6178)
     val cardBg = Color(0xFF151D33)
+    val context = LocalContext.current
 
     Card(
         modifier = Modifier
@@ -565,7 +584,7 @@ private fun ShortcutItemCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = shortcut.displayTitle(),
+                            text = shortcut.displayTitle(context),
                             color = if (shortcut.isEnabled) Color.White else inkDim,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
@@ -594,7 +613,7 @@ private fun ShortcutItemCard(
                     Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
-                        text = shortcut.displayBody(),
+                        text = shortcut.displayBody(context),
                         color = inkDim,
                         fontSize = 12.sp,
                         maxLines = 1,
@@ -604,8 +623,20 @@ private fun ShortcutItemCard(
 
                 // Switch
                 Switch(
-                    checked = shortcut.isEnabled,
-                    onCheckedChange = onToggle,
+                    checked = shortcut.isEnabled && isNotificationPermissionGranted,
+                    enabled = isNotificationPermissionGranted,
+                    onCheckedChange = { checked ->
+                        if (!isNotificationPermissionGranted) {
+                            onRequestNotificationPermission()
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.permission_notification_required),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            onToggle(checked)
+                        }
+                    },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Color.White,
                         checkedTrackColor = accentColor,
@@ -632,7 +663,7 @@ private fun ShortcutItemCard(
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "PALETTE ACCENT",
+                            text = stringResource(R.string.shortcut_notif_palette_accent),
                             color = inkDim,
                             fontSize = 9.5.sp,
                             fontWeight = FontWeight.SemiBold
@@ -707,6 +738,25 @@ private fun ShortcutEditorContent(
     var customBody by remember { mutableStateOf(initialItem.body) }
     var selectedIconType by remember { mutableStateOf(initialItem.iconType) }
 
+    // Synchronize enabled state if notification permission is revoked
+    LaunchedEffect(isNotificationPermissionGranted) {
+        if (!isNotificationPermissionGranted && isEnabled) {
+            isEnabled = false
+        }
+    }
+
+    // Listen for external shortcut updates (e.g. removed via notification shade action)
+    LaunchedEffect(initialItem.id) {
+        ShortcutNotificationPreferences.shortcutsUpdateEvent.collect { changedId ->
+            if (changedId == initialItem.id || changedId == "ALL") {
+                val updated = ShortcutNotificationPreferences.getShortcutById(context, initialItem.id)
+                if (updated != null) {
+                    isEnabled = updated.isEnabled
+                }
+            }
+        }
+    }
+
     var previewDisplayMode by remember { mutableStateOf(PreviewDisplayMode.EXPANDED) }
     var showAppPicker by remember { mutableStateOf(false) }
 
@@ -715,8 +765,9 @@ private fun ShortcutEditorContent(
     }
 
     fun getCurrentSnapshot(): ShortcutItem {
+        val effectiveEnabled = isEnabled && isNotificationPermissionGranted
         return initialItem.copy(
-            isEnabled = isEnabled,
+            isEnabled = effectiveEnabled,
             isOngoing = isOngoing,
             packageName = targetPackage,
             appName = targetAppName,
@@ -728,7 +779,7 @@ private fun ShortcutEditorContent(
 
     val attemptSave = {
         if (targetPackage.isBlank()) {
-            Toast.makeText(context, "Please select an app for this shortcut", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.shortcut_notif_toast_select_first), Toast.LENGTH_SHORT).show()
             showAppPicker = true
         } else {
             onSave(getCurrentSnapshot())
@@ -767,7 +818,7 @@ private fun ShortcutEditorContent(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "ID #${initialItem.notificationId} • CONFIGURATION",
+                    text = stringResource(R.string.shortcut_notif_config_header, initialItem.notificationId),
                     color = signalOrange,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
@@ -790,7 +841,7 @@ private fun ShortcutEditorContent(
                 shape = RoundedCornerShape(10.dp),
                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
             ) {
-                Text("Save", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.save), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -806,20 +857,30 @@ private fun ShortcutEditorContent(
             Column(modifier = Modifier.padding(16.dp)) {
                 // Enable Notification Row
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable(enabled = !isNotificationPermissionGranted) {
+                            onRequestNotificationPermission()
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.permission_notification_required),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
                             .size(38.dp)
                             .clip(RoundedCornerShape(11.dp))
-                            .background(if (isEnabled) signalOrange.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.05f)),
+                            .background(if (isEnabled && isNotificationPermissionGranted) signalOrange.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.05f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.NotificationsActive,
                             contentDescription = null,
-                            tint = if (isEnabled) signalOrange else inkDim,
+                            tint = if (isEnabled && isNotificationPermissionGranted) signalOrange else inkDim,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -841,12 +902,24 @@ private fun ShortcutEditorContent(
                     }
 
                     Switch(
-                        checked = isEnabled,
+                        checked = isEnabled && isNotificationPermissionGranted,
+                        enabled = isNotificationPermissionGranted,
                         onCheckedChange = { checked ->
-                            if (checked && !isNotificationPermissionGranted) {
-                                onRequestNotificationPermission()
+                            if (checked) {
+                                if (!isNotificationPermissionGranted) {
+                                    onRequestNotificationPermission()
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.permission_notification_required),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    isEnabled = false
+                                } else {
+                                    isEnabled = true
+                                }
+                            } else {
+                                isEnabled = false
                             }
-                            isEnabled = checked
                         },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
@@ -883,7 +956,7 @@ private fun ShortcutEditorContent(
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        text = "PALETTE COLORIZED",
+                        text = stringResource(R.string.shortcut_notif_palette_colorized),
                         color = Color.White.copy(alpha = 0.7f),
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold
@@ -906,7 +979,7 @@ private fun ShortcutEditorContent(
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = "Collapsed",
+                        text = stringResource(R.string.shortcut_notif_mode_collapsed),
                         color = if (previewDisplayMode == PreviewDisplayMode.COLLAPSED) Color.White else inkDim,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold
@@ -921,7 +994,7 @@ private fun ShortcutEditorContent(
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = "Expanded",
+                        text = stringResource(R.string.shortcut_notif_mode_expanded),
                         color = if (previewDisplayMode == PreviewDisplayMode.EXPANDED) Color.White else inkDim,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold
@@ -935,13 +1008,23 @@ private fun ShortcutEditorContent(
         // Standard System Notification Preview Card
         NotificationLivePreviewCard(
             targetAppName = targetAppName,
-            title = if (customTitle.isNotBlank()) customTitle else (if (targetAppName.isNotBlank()) "Open $targetAppName" else "Open App"),
-            body = if (customBody.isNotBlank()) customBody else "Tap to launch",
+            title = if (customTitle.isNotBlank()) customTitle else (if (targetAppName.isNotBlank()) stringResource(R.string.shortcut_open_app_format, targetAppName) else stringResource(R.string.shortcut_open_app_default)),
+            body = if (customBody.isNotBlank()) customBody else stringResource(R.string.shortcut_tap_to_launch),
             iconType = selectedIconType,
             isOngoing = isOngoing,
             currentAppInfo = currentAppInfo,
             accentColor = signalOrange,
-            displayMode = previewDisplayMode
+            displayMode = previewDisplayMode,
+            onRemoveClick = {
+                isEnabled = false
+                ShortcutNotificationPreferences.setShortcutEnabled(context, initialItem.id, false)
+                ShortcutNotificationManager.syncServiceState(context)
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.shortcut_notif_muted_status),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -1063,7 +1146,7 @@ private fun ShortcutEditorContent(
                     onValueChange = { customTitle = it },
                     placeholder = {
                         Text(
-                            text = if (targetAppName.isNotBlank()) "Open $targetAppName" else "Open App",
+                            text = if (targetAppName.isNotBlank()) stringResource(R.string.shortcut_open_app_format, targetAppName) else stringResource(R.string.shortcut_open_app_default),
                             color = inkDim
                         )
                     },
@@ -1106,7 +1189,7 @@ private fun ShortcutEditorContent(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Optional",
+                        text = stringResource(R.string.optional),
                         color = inkDim,
                         fontSize = 11.sp
                     )
@@ -1117,7 +1200,7 @@ private fun ShortcutEditorContent(
                     onValueChange = { customBody = it },
                     placeholder = {
                         Text(
-                            text = "Tap to launch",
+                            text = stringResource(R.string.shortcut_tap_to_launch),
                             color = inkDim
                         )
                     },
@@ -1152,7 +1235,11 @@ private fun ShortcutEditorContent(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    listOf("Tap to launch", "Quick launch", "Open now").forEach { preset ->
+                    listOf(
+                        stringResource(R.string.shortcut_preset_tap_to_launch),
+                        stringResource(R.string.shortcut_preset_quick_launch),
+                        stringResource(R.string.shortcut_preset_open_now)
+                    ).forEach { preset ->
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
@@ -1320,11 +1407,11 @@ private fun ShortcutEditorContent(
             onSelectApp = { app ->
                 targetPackage = app.packageName
                 targetAppName = app.label
-                if (customTitle.isBlank() || customTitle.startsWith("Open ")) {
-                    customTitle = "Open ${app.label}"
+                if (customTitle.isBlank() || customTitle.startsWith("Open ") || customTitle.startsWith("فتح ") || customTitle.startsWith("باز کردن ")) {
+                    customTitle = context.getString(R.string.shortcut_open_app_format, app.label)
                 }
                 showAppPicker = false
-                Toast.makeText(context, "${app.label} selected", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.search_engine_selected_toast, app.label), Toast.LENGTH_SHORT).show()
             }
         )
     }
@@ -1346,12 +1433,13 @@ fun NotificationLivePreviewCard(
     isOngoing: Boolean,
     currentAppInfo: AppInfo?,
     accentColor: Color,
-    displayMode: PreviewDisplayMode = PreviewDisplayMode.EXPANDED
+    displayMode: PreviewDisplayMode = PreviewDisplayMode.EXPANDED,
+    onRemoveClick: (() -> Unit)? = null
 ) {
     val cardBg = Color(0xFF1B202E)
     val textColor = Color(0xFFF1F3F9)
     val textDim = Color(0xFF949CB2)
-    val displayBody = if (body.isNotBlank()) body else "Tap to launch"
+    val displayBody = if (body.isNotBlank()) body else stringResource(R.string.shortcut_tap_to_launch)
 
     // Asynchronously extract dominant/vibrant accent color from app icon using Palette
     val dynamicPaletteColor by produceState<Color>(initialValue = accentColor, key1 = currentAppInfo?.packageName) {
@@ -1418,7 +1506,7 @@ fun NotificationLivePreviewCard(
                 )
 
                 Text(
-                    text = " • now",
+                    text = stringResource(R.string.shortcut_notif_now),
                     color = textDim,
                     fontSize = 12.sp
                 )
@@ -1428,7 +1516,7 @@ fun NotificationLivePreviewCard(
                 if (isOngoing) {
                     Icon(
                         imageVector = Icons.Default.Lock,
-                        contentDescription = "Persistent",
+                        contentDescription = stringResource(R.string.shortcut_notif_persistent),
                         tint = dynamicPaletteColor,
                         modifier = Modifier.size(13.dp)
                     )
@@ -1551,7 +1639,7 @@ fun NotificationLivePreviewCard(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "OPEN",
+                            text = stringResource(R.string.shortcut_action_open),
                             color = dynamicPaletteColor,
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.Bold
@@ -1560,7 +1648,7 @@ fun NotificationLivePreviewCard(
 
                     // Action 2: Remove
                     OutlinedButton(
-                        onClick = { },
+                        onClick = { onRemoveClick?.invoke() },
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = textDim),
                         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
                         shape = RoundedCornerShape(8.dp),
@@ -1575,7 +1663,7 @@ fun NotificationLivePreviewCard(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "REMOVE",
+                            text = stringResource(R.string.shortcut_action_remove),
                             color = textDim,
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.SemiBold
@@ -1698,7 +1786,7 @@ fun AppPickerDialog(
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "${apps.size} installed applications",
+                                text = stringResource(R.string.shortcut_notif_apps_count, apps.size),
                                 color = inkDim,
                                 fontSize = 12.sp
                             )

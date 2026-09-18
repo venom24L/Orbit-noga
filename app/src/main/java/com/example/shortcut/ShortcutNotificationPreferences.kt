@@ -3,6 +3,7 @@ package com.example.shortcut
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.json.JSONArray
 import java.util.UUID
 
@@ -12,6 +13,8 @@ import java.util.UUID
 object ShortcutNotificationPreferences {
     private const val PREFS_NAME = "orbit_shortcut_notification_prefs"
     private const val TAG = "ShortcutNotificationPrefs"
+
+    val shortcutsUpdateEvent = MutableSharedFlow<String>(extraBufferCapacity = 32)
 
     const val KEY_SHORTCUTS_LIST = "shortcut_notifications_list_json"
     const val KEY_ENABLED = "shortcut_notif_enabled"
@@ -134,6 +137,7 @@ object ShortcutNotificationPreferences {
             current.add(item)
         }
         saveAllShortcutsList(context, current)
+        shortcutsUpdateEvent.tryEmit(item.id)
     }
 
     fun setShortcutEnabled(context: Context, id: String, enabled: Boolean) {
@@ -142,6 +146,7 @@ object ShortcutNotificationPreferences {
         if (index >= 0) {
             current[index] = current[index].copy(isEnabled = enabled)
             saveAllShortcutsList(context, current)
+            shortcutsUpdateEvent.tryEmit(id)
         }
     }
 
@@ -151,6 +156,7 @@ object ShortcutNotificationPreferences {
         if (index >= 0) {
             current.removeAt(index)
             saveAllShortcutsList(context, current)
+            shortcutsUpdateEvent.tryEmit(id)
             return true
         }
         return false
@@ -171,8 +177,8 @@ object ShortcutNotificationPreferences {
             isOngoing = true,
             packageName = pkg,
             appName = appName,
-            title = if (appName.isNotBlank()) "Open $appName" else "",
-            body = "Tap to launch",
+            title = if (appName.isNotBlank()) context.getString(com.example.R.string.shortcut_open_app_format, appName) else "",
+            body = context.getString(com.example.R.string.shortcut_tap_to_launch),
             iconType = ICON_TYPE_APP,
             createdAt = System.currentTimeMillis()
         )
@@ -233,9 +239,9 @@ object ShortcutNotificationPreferences {
     fun getTitle(context: Context): String {
         val primary = getAllShortcuts(context).firstOrNull()
         if (primary != null) {
-            return primary.displayTitle()
+            return primary.displayTitle(context)
         }
-        return "App Shortcut"
+        return context.getString(com.example.R.string.shortcut_open_app_default)
     }
 
     fun getRawTitle(context: Context): String {
@@ -245,9 +251,9 @@ object ShortcutNotificationPreferences {
     fun getBody(context: Context): String {
         val primary = getAllShortcuts(context).firstOrNull()
         if (primary != null) {
-            return primary.displayBody()
+            return primary.displayBody(context)
         }
-        return "Tap to launch"
+        return context.getString(com.example.R.string.shortcut_tap_to_launch)
     }
 
     fun getRawBody(context: Context): String {

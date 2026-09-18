@@ -1,5 +1,7 @@
 package com.example.shortcut
 
+import android.content.Context
+import com.example.R
 import org.json.JSONObject
 import java.util.UUID
 
@@ -18,15 +20,17 @@ data class ShortcutItem(
     val iconType: String = ShortcutNotificationPreferences.ICON_TYPE_APP,
     val createdAt: Long = System.currentTimeMillis()
 ) {
-    fun displayTitle(): String {
+    fun displayTitle(context: Context? = null): String {
         if (title.isNotBlank()) return title
-        if (appName.isNotBlank()) return "Open $appName"
-        return "Open App"
+        if (appName.isNotBlank()) {
+            return context?.getString(R.string.shortcut_open_app_format, appName) ?: "Open $appName"
+        }
+        return context?.getString(R.string.shortcut_open_app_default) ?: "Open App"
     }
 
-    fun displayBody(): String {
+    fun displayBody(context: Context? = null): String {
         if (body.isNotBlank()) return body
-        return "Tap to launch"
+        return context?.getString(R.string.shortcut_tap_to_launch) ?: "Tap to launch"
     }
 
     fun toJson(): JSONObject {

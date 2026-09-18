@@ -251,9 +251,22 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         // Query permissions in real-time when returning from system settings screens
-        isOverlayGranted.value = Settings.canDrawOverlays(this)
+        val overlay = Settings.canDrawOverlays(this)
+        isOverlayGranted.value = overlay
         isUsageGranted.value = hasUsageStatsPermission(this)
         isNotificationGranted.value = hasNotificationsPermission(this)
+
+        if (overlay && !FloatingLauncherService.isServiceRunning.value) {
+            val intent = Intent(this, FloatingLauncherService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
+        }
+
+        // Notify shortcut screens that the app resumed in case actions were triggered in notification shade
+        com.example.shortcut.ShortcutNotificationPreferences.shortcutsUpdateEvent.tryEmit("ALL")
     }
 
     private fun requestOverlayPermission() {
@@ -370,7 +383,7 @@ fun MainScreen(
     LaunchedEffect(Unit) {
         val appNotFoundPkg = activity?.intent?.getStringExtra(ShortcutNotificationManager.EXTRA_SHORTCUT_APP_NOT_FOUND)
         if (!appNotFoundPkg.isNullOrBlank()) {
-            Toast.makeText(context, "Target app is unavailable. Please choose a new app.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, context.getString(R.string.app_unavailable_toast), Toast.LENGTH_LONG).show()
             selectedTab = MainTab.STUDIO
             openShortcutDirectly = true
         } else if (openShortcutDirectly) {
@@ -657,10 +670,19 @@ fun OrbitTabContent(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             // Floating Service Card
+            val hasOverlayPermission = Settings.canDrawOverlays(context)
+            val isFloatingActive = isServiceRunning && hasOverlayPermission
             Card(
                 modifier = Modifier
                     .weight(1f)
-                    .border(1.dp, Color.White.copy(alpha = 0.07f), RoundedCornerShape(16.dp)),
+                    .border(1.dp, Color.White.copy(alpha = 0.07f), RoundedCornerShape(16.dp))
+                    .clickable {
+                        if (!hasOverlayPermission) {
+                            onRequestOverlay()
+                        } else {
+                            onToggleService()
+                        }
+                    },
                 colors = CardDefaults.cardColors(containerColor = Color(0x0CFFFFFF)),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -673,14 +695,13 @@ fun OrbitTabContent(
                         Icon(
                             imageVector = Icons.Default.PlayCircle,
                             contentDescription = null,
-                            tint = trackBlue,
+                            tint = if (isFloatingActive) Color(0xFF10B981) else trackBlue,
                             modifier = Modifier.size(18.dp)
                         )
-                        val hasOverlayPermission = Settings.canDrawOverlays(context)
                         Switch(
-                            checked = isServiceRunning && hasOverlayPermission,
-                            onCheckedChange = { checked ->
-                                if (!Settings.canDrawOverlays(context)) {
+                            checked = isFloatingActive,
+                            onCheckedChange = { _ ->
+                                if (!hasOverlayPermission) {
                                     onRequestOverlay()
                                 } else {
                                     onToggleService()
@@ -688,9 +709,10 @@ fun OrbitTabContent(
                             },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
-                                checkedTrackColor = signalOrange,
-                                uncheckedThumbColor = inkDim,
-                                uncheckedTrackColor = Color.White.copy(alpha = 0.1f)
+                                checkedTrackColor = Color(0xFF10B981),
+                                uncheckedThumbColor = Color(0xFF9E9E9E),
+                                uncheckedTrackColor = Color(0xFF2A2E3D),
+                                uncheckedBorderColor = Color.Transparent
                             )
                         )
                     }
@@ -2622,7 +2644,7 @@ fun StudioTabContent(
                     selectedSymbol = "custom"
                     ThemePreferences.setBubbleSymbol(context, "custom")
                     customImageVersion++
-                    Toast.makeText(context, "Custom Bubble Image Applied & Saved!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.bubble_saved_toast), Toast.LENGTH_SHORT).show()
 
                     if (isServiceRunning) {
                         val serviceIntent = Intent(context, FloatingLauncherService::class.java).apply {
@@ -2632,7 +2654,7 @@ fun StudioTabContent(
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    Toast.makeText(context, "Failed to save cropped image", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.bubble_crop_failed_toast), Toast.LENGTH_SHORT).show()
                 }
                 selectedImageUri = null
             }
@@ -3511,7 +3533,7 @@ fun SettingsTabContent(
                 ThemePreferences.setUsername(context, newName)
                 onUsernameChanged(newName)
                 showChangeUsernameDialog = false
-                Toast.makeText(context, "Username updated!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.username_updated_toast), Toast.LENGTH_SHORT).show()
             }
         )
     }
@@ -3524,7 +3546,7 @@ fun SettingsTabContent(
                 SearchEnginePreferences.setSelectedEngine(context, newEngine.id)
                 selectedEngine = newEngine
                 showSearchEngineDialog = false
-                Toast.makeText(context, "${newEngine.name} selected", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.search_engine_selected_toast, newEngine.name), Toast.LENGTH_SHORT).show()
             }
         )
     }

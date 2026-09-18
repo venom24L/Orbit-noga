@@ -473,7 +473,7 @@ fun WifiMonitorCockpitContent(
                                 horizontalArrangement = Arrangement.spacedBy(3.dp)
                             ) {
                                 Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = neonCyan, modifier = Modifier.size(10.dp))
-                                Text("MONTHLY", color = neonCyan, fontSize = 8.sp, fontWeight = FontWeight.ExtraBold)
+                                Text(stringResource(R.string.wifi_metric_monthly), color = neonCyan, fontSize = 8.sp, fontWeight = FontWeight.ExtraBold)
                             }
                         }
                     }
@@ -498,7 +498,7 @@ fun WifiMonitorCockpitContent(
                             "%.0f MB".format(remainingMb)
                         }
                         val limitColor = if (metrics.isLimitExceeded) alertPink else emeraldGreen
-                        val limitLabel = if (metrics.isLimitExceeded) "QUOTA EXCEEDED" else "$remainingStr REMAINING"
+                        val limitLabel = if (metrics.isLimitExceeded) stringResource(R.string.wifi_quota_exceeded) else stringResource(R.string.wifi_quota_remaining, remainingStr)
                         Text(
                             text = limitLabel,
                             color = limitColor,
@@ -795,10 +795,10 @@ fun WifiMonitorCockpitContent(
                                     horizontalArrangement = Arrangement.spacedBy(3.dp)
                                 ) {
                                     Icon(Icons.Default.Speed, contentDescription = null, tint = neonCyan, modifier = Modifier.size(11.dp))
-                                    Text("LINK SPEED", color = inkDim, fontSize = 8.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(stringResource(R.string.wifi_metric_link_speed), color = inkDim, fontSize = 8.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 }
                                 Spacer(modifier = Modifier.height(5.dp))
-                                Text("${metrics.linkSpeedMbps} Mbps", color = neonCyan, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(stringResource(R.string.wifi_speed_mbps_format, metrics.linkSpeedMbps), color = neonCyan, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.Bottom) {
                                     listOf(6.dp, 10.dp, 8.dp, 12.dp).forEach { h ->
@@ -825,7 +825,7 @@ fun WifiMonitorCockpitContent(
                                     horizontalArrangement = Arrangement.spacedBy(3.dp)
                                 ) {
                                     Icon(Icons.Default.Wifi, contentDescription = null, tint = trackBlue, modifier = Modifier.size(11.dp))
-                                    Text("BAND", color = inkDim, fontSize = 8.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(stringResource(R.string.wifi_metric_band), color = inkDim, fontSize = 8.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 }
                                 Spacer(modifier = Modifier.height(5.dp))
                                 Text(if (metrics.frequencyBand.isNotEmpty()) metrics.frequencyBand else "2.4 GHz", color = trackBlue, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -855,7 +855,7 @@ fun WifiMonitorCockpitContent(
                                     horizontalArrangement = Arrangement.spacedBy(3.dp)
                                 ) {
                                     Icon(Icons.Default.Sensors, contentDescription = null, tint = pingStatColor, modifier = Modifier.size(11.dp))
-                                    Text("LATENCY", color = inkDim, fontSize = 8.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(stringResource(R.string.wifi_metric_latency), color = inkDim, fontSize = 8.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 }
                                 Spacer(modifier = Modifier.height(5.dp))
                                 Text(if (metrics.pingMs >= 0) "${metrics.pingMs} ms" else stringResource(id = R.string.ping_offline), color = pingStatColor, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -950,10 +950,11 @@ fun WifiMonitorCockpitContent(
                             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 7.dp, vertical = 8.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                                     Icon(Icons.Default.Wifi, contentDescription = null, tint = neonCyan, modifier = Modifier.size(11.dp))
-                                    Text("LINK & BAND", color = inkDim, fontSize = 8.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(stringResource(R.string.wifi_metric_link_band), color = inkDim, fontSize = 8.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 }
                                 Spacer(modifier = Modifier.height(5.dp))
-                                Text("${metrics.linkSpeedMbps}M ${if (metrics.frequencyBand.isNotEmpty()) metrics.frequencyBand else "Wi-Fi"}", color = neonCyan, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                val bandDisplay = if (metrics.frequencyBand.isNotEmpty()) metrics.frequencyBand else "Wi-Fi"
+                                Text(stringResource(R.string.wifi_speed_band_format, metrics.linkSpeedMbps, bandDisplay), color = neonCyan, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.Bottom) {
                                     listOf(6.dp, 10.dp, 8.dp, 11.dp).forEach { h ->
@@ -977,7 +978,7 @@ fun WifiMonitorCockpitContent(
                             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 7.dp, vertical = 8.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                                     Icon(Icons.Default.Sensors, contentDescription = null, tint = pingStatColor, modifier = Modifier.size(11.dp))
-                                    Text("LATENCY", color = inkDim, fontSize = 8.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(stringResource(R.string.wifi_metric_latency), color = inkDim, fontSize = 8.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 }
                                 Spacer(modifier = Modifier.height(5.dp))
                                 Text(if (metrics.pingMs >= 0) "${metrics.pingMs} ms" else stringResource(id = R.string.ping_offline), color = pingStatColor, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -1023,7 +1024,7 @@ fun WifiMonitorCockpitContent(
                                                     .clip(CircleShape)
                                                     .background(emeraldGreen)
                                             )
-                                            Text("OS SYNC", color = emeraldGreen, fontSize = 7.sp, fontWeight = FontWeight.ExtraBold)
+                                            Text(stringResource(R.string.wifi_metric_os_sync), color = emeraldGreen, fontSize = 7.sp, fontWeight = FontWeight.ExtraBold)
                                         }
                                     }
                                     Spacer(modifier = Modifier.height(4.dp))
@@ -1127,7 +1128,7 @@ fun WifiMonitorCockpitContent(
                             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 7.dp, vertical = 8.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                                     Icon(Icons.Default.Sensors, contentDescription = null, tint = pingStatColor, modifier = Modifier.size(11.dp))
-                                    Text("LATENCY", color = inkDim, fontSize = 8.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(stringResource(R.string.wifi_metric_latency), color = inkDim, fontSize = 8.5.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 }
                                 Spacer(modifier = Modifier.height(5.dp))
                                 Text(if (metrics.pingMs >= 0) "${metrics.pingMs} ms" else stringResource(id = R.string.ping_offline), color = pingStatColor, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)

@@ -190,7 +190,7 @@ fun StudioCollectionSection(
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(text = "Open Canvas", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(text = stringResource(id = R.string.open_canvas), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
 
                         OutlinedButton(
@@ -206,7 +206,7 @@ fun StudioCollectionSection(
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(text = "Upload Photo", fontSize = 12.sp, color = Color.White)
+                            Text(text = stringResource(id = R.string.upload_photo), fontSize = 12.sp, color = Color.White)
                         }
                     }
                 }
