@@ -158,12 +158,18 @@ class FloatingLauncherService : Service() {
                     PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
                 )
                 val deletePendingIntent = com.example.shortcut.NotificationDismissReceiver.createLauncherDeleteIntent(context)
+                val runShortsPendingIntent = com.example.shortcut.NotificationDismissReceiver.createRunShortsIntent(context)
                 val notif = NotificationCompat.Builder(context, CHANNEL_ID)
                     .setContentTitle(context.getString(R.string.app_name))
                     .setContentText(context.getString(R.string.orbit_launcher_active))
                     .setSmallIcon(android.R.drawable.ic_dialog_dialer)
                     .setContentIntent(pendingIntent)
                     .setDeleteIntent(deletePendingIntent)
+                    .addAction(
+                        android.R.drawable.ic_media_play,
+                        context.getString(R.string.action_run_shorts),
+                        runShortsPendingIntent
+                    )
                     .setOngoing(true)
                     .setAutoCancel(false)
                     .setCategory(NotificationCompat.CATEGORY_SERVICE)
@@ -1074,6 +1080,7 @@ private class BubbleBackgroundDrawable(
         )
 
         val deletePendingIntent = com.example.shortcut.NotificationDismissReceiver.createLauncherDeleteIntent(this)
+        val runShortsPendingIntent = com.example.shortcut.NotificationDismissReceiver.createRunShortsIntent(this)
 
         val title = getString(R.string.app_name)
         val text = if (isBackgroundMode) {
@@ -1088,6 +1095,11 @@ private class BubbleBackgroundDrawable(
             .setSmallIcon(android.R.drawable.ic_dialog_dialer)
             .setContentIntent(pendingIntent)
             .setDeleteIntent(deletePendingIntent)
+            .addAction(
+                android.R.drawable.ic_media_play,
+                getString(R.string.action_run_shorts),
+                runShortsPendingIntent
+            )
             .setOngoing(true)
             .setAutoCancel(false)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)

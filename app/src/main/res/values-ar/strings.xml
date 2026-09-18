@@ -578,4 +578,6 @@
     <string name="retry_label">إعادة المحاولة</string>
     <string name="wifi_limit_placeholder">مثال: 1500 ميجابايت</string>
     <string name="wifi_grant_permission">منح الإذن</string>
+    <string name="action_run_shorts">Run Shorts</string>
+    <string name="shortcuts_restored_all">تمت استعادة جميع الاختصارات للعمل</string>
 </resources>

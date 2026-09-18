@@ -150,6 +150,30 @@ object ShortcutNotificationPreferences {
         }
     }
 
+    /**
+     * Enables all configured shortcuts that have a valid package and saves the updated list.
+     * Returns the number of configured valid shortcuts.
+     */
+    fun enableAllShortcuts(context: Context): Int {
+        val current = getAllShortcuts(context).toMutableList()
+        var updated = false
+        var validCount = 0
+        for (i in current.indices) {
+            if (current[i].packageName.isNotBlank()) {
+                validCount++
+                if (!current[i].isEnabled) {
+                    current[i] = current[i].copy(isEnabled = true)
+                    updated = true
+                }
+            }
+        }
+        if (updated) {
+            saveAllShortcutsList(context, current)
+            shortcutsUpdateEvent.tryEmit("ALL")
+        }
+        return validCount
+    }
+
     fun deleteShortcut(context: Context, id: String): Boolean {
         val current = getAllShortcuts(context).toMutableList()
         val index = current.indexOfFirst { it.id == id }

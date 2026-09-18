@@ -581,4 +581,6 @@
     <string name="retry_label">Retry</string>
     <string name="wifi_limit_placeholder">e.g. 1500 MB</string>
     <string name="wifi_grant_permission">GRANT</string>
+    <string name="action_run_shorts">Run Shorts</string>
+    <string name="shortcuts_restored_all">All shortcuts restored</string>
 </resources>
